@@ -17,19 +17,9 @@ NSString * returnFilePathWithName(NSString * fileName){
     return filePath;
 }
 
-//void updatePhonebook(NSString * entry){
-//   
-////    NSString * fileContents = [NSString stringWithContentsOfFile:returnFilePath() encoding:NSUTF8StringEncoding error:nil];
-////    if (fileContents){
-////        fileContents = [fileContents stringByAppendingString:[@"\n" stringByAppendingString:entry]];
-////    }
-////    [fileContents writeToFile:returnFilePath() atomically:YES encoding:NSUTF8StringEncoding error:nil];
-//}
-
 void createPhonebookWithName(NSString * name){
     
     NSString * filePath = returnFilePathWithName(name);
-//    NSLog(@"file path is %@", filePath);
     NSString * fileContents = [NSString stringWithContentsOfFile:filePath encoding:NSUTF8StringEncoding error:nil];
     
     if((unsigned long)fileContents.length > 0){
@@ -41,23 +31,17 @@ void createPhonebookWithName(NSString * name){
     }
 }
 
-void updatePhonebookWithEntry(NSString * name){
+void updatePhonebookWithEntry(NSString * entry, NSString * phoneBookName){
     
-//    NSString * filePath = returnFilePathWithName(name);
-//    NSLog(@"file path is %@", filePath);
-//    NSString * fileContents = [NSString stringWithContentsOfFile:filePath encoding:NSUTF8StringEncoding error:nil];
-//    
-//    if((unsigned long)fileContents.length > 0){
-//        NSLog(@"this file exists");
-//    }
-//    else{
-//        fileContents = @"Name    Number";
-//        [fileContents writeToFile:filePath atomically:YES encoding:NSUTF8StringEncoding error:nil];
-//    }
+    NSString * filePath = returnFilePathWithName(phoneBookName);
+    NSString * fileContents = [NSString stringWithContentsOfFile:filePath encoding:NSUTF8StringEncoding error:nil];
+    [[fileContents stringByAppendingString:[@"\n" stringByAppendingString:entry]]
+                               writeToFile:filePath
+                                atomically:YES encoding:NSUTF8StringEncoding error:nil];
 }
 
 NSString * parseAndReturnInputForEntryAndCommand(NSString * entry, NSString * commandString){
-    
+        
     if ([entry rangeOfString:commandString].location != NSNotFound){  //learn regular expressions
         
         NSString * sub1 = commandString;
@@ -85,10 +69,6 @@ int main(int argc, const char * argv[]) {
 
             fgets (str, 256, stdin);
             
-    // removes carriage return
-    //        if ((strlen(name)>0) && (name[strlen (name) - 1] == '\n'))
-    //            name[strlen (name) - 1] = '\0';
-            
             NSString * entry = [NSString stringWithFormat:@"%s", str];
             
             NSString * parsedInput = parseAndReturnInputForEntryAndCommand(entry, @"create");
@@ -96,9 +76,11 @@ int main(int argc, const char * argv[]) {
                 createPhonebookWithName(parsedInput);
             }
             
-            
-            
-//            updatePhonebook(entry);
+           parsedInput = parseAndReturnInputForEntryAndCommand(entry, @"update");
+            if (parsedInput){
+                updatePhonebookWithEntry(parsedInput, parsedInput);
+            }
+
         }
     }
     return 0;
