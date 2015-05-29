@@ -106,47 +106,27 @@ NSString * parseAndReturnInputForEntryAndCommand(NSString * entry, NSString * co
     }
 }
 
-void scanEntry(NSString * input){                       //
-    
-//    NSString *str = input;
-    
-//    split function for nstring
-//    nsprocess info
-    
-    NSMutableArray * results = [NSMutableArray array];
-    NSScanner * scanner = [NSScanner scannerWithString:input];
-    NSString * tmp;
-    
-    while ([scanner isAtEnd]==NO)
-    {
-        [scanner scanUpToString:@"'" intoString:NULL]; //move the scanner up to the point you want
-        [scanner scanString:@"'" intoString:NULL];     //scan the the '
-        
-        [scanner scanUpToString:@"'" intoString:&tmp];
-        
-        if ([scanner isAtEnd] == NO)
-            [results addObject:tmp];
-        [scanner scanString:@"'" intoString:NULL];
-    }
-    
-    for (NSString *item in results)
-    {
-        NSLog(@"%@", item);
-    }
-}
 
-
-void segmentStringBy(NSString * input, NSString * separator){
+NSArray * segmentStringBy(NSString * input, NSString * separator){
     
     NSArray * subStrings = [input componentsSeparatedByString:separator];
+    NSMutableArray * saved = [[NSMutableArray alloc] init];
+
     for (NSString * aString in subStrings){
-        //checks if a subString is only made up of space
-        if ([aString stringByReplacingOccurrencesOfString:@" " withString:@""].length != 0){
+        if ([aString stringByReplacingOccurrencesOfString:@" " withString:@""].length != 0){  //check if a subString made up of 1 or more spaces
             NSLog(@"%@", aString);
+            [saved addObject:aString];
         }
     }
+    
+    int i;
+    for (i=0; i<[saved count]; i++){  //need to explicitly use index to avoid enumerating while mutable array being mutated
+        NSLog(@"saved element %@", [saved objectAtIndex:i]);
+    }
+    
+    
+    return subStrings;
 }
-
 
 
 int main(int argc, const char * argv[]) {
@@ -161,7 +141,13 @@ int main(int argc, const char * argv[]) {
             
             NSString * entry = [NSString stringWithFormat:@"%s", str];
             
+            
+            
+            
             NSString * parsedInput = parseAndReturnInputForEntryAndCommand(entry, @"create");
+            
+            
+            
             if (parsedInput){
                 createPhonebookWithName(parsedInput);
             }
@@ -170,9 +156,6 @@ int main(int argc, const char * argv[]) {
             if (parsedInput){
                 segmentStringBy(parsedInput, @"'");
             }
-            
-            
-           
 
         }
     }
