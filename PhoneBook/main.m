@@ -13,18 +13,34 @@ NSString * returnFilePathWithName(NSString * fileName){
     NSArray * paths = NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES);
     //directory, domain (user, public, network), doExpandTilde
     NSString * documentDirectory = [paths objectAtIndex:0];
-    NSString * filePath = [NSString stringWithFormat:@"%@/phonebook.txt", documentDirectory];
+    NSString * filePath = [NSString stringWithFormat:@"%@/%@.txt", documentDirectory, fileName];
     return filePath;
 }
 
-void updatePhonebook(NSString * entry){
-   
-//    NSString * fileContents = [NSString stringWithContentsOfFile:returnFilePath() encoding:NSUTF8StringEncoding error:nil];
-//    if (fileContents){
-//        fileContents = [fileContents stringByAppendingString:[@"\n" stringByAppendingString:entry]];
-//    }
-//    [fileContents writeToFile:returnFilePath() atomically:YES encoding:NSUTF8StringEncoding error:nil];
+//void updatePhonebook(NSString * entry){
+//   
+////    NSString * fileContents = [NSString stringWithContentsOfFile:returnFilePath() encoding:NSUTF8StringEncoding error:nil];
+////    if (fileContents){
+////        fileContents = [fileContents stringByAppendingString:[@"\n" stringByAppendingString:entry]];
+////    }
+////    [fileContents writeToFile:returnFilePath() atomically:YES encoding:NSUTF8StringEncoding error:nil];
+//}
+
+void createPhonebookWithNameEntry(NSString * name){
+    
+    NSString * filePath = returnFilePathWithName(name);
+    NSLog(@"file path is %@", filePath);
+    NSString * fileContents = [NSString stringWithContentsOfFile:filePath encoding:NSUTF8StringEncoding error:nil];
+    
+    if((unsigned long)fileContents.length > 0){
+        NSLog(@"this file exists");
+    }
+    else{
+        fileContents = @"Name    Number";
+        [fileContents writeToFile:filePath atomically:YES encoding:NSUTF8StringEncoding error:nil];
+    }
 }
+
 
 
 int main(int argc, const char * argv[]) {
@@ -43,26 +59,24 @@ int main(int argc, const char * argv[]) {
             
             NSString * entry = [NSString stringWithFormat:@"%s", str];
             
-//            learn how to do regular expressions
-            
             NSString * commandString = @"create";
             
-            if ([entry rangeOfString:commandString].location != NSNotFound){
+            if ([entry rangeOfString:commandString].location != NSNotFound){  //learn regular expressions
                 
                 NSString * sub1 = commandString;
-                
+            
                 int sub1Start = (int)[entry rangeOfString:sub1].location;
                 int sub2Start = sub1Start + (int)sub1.length;
               
-                NSRange sub2Range = NSMakeRange(sub2Start+1, entry.length-(sub2Start+1)); //+1 assumes user enter's a space, could do check here
-                
+                NSRange sub2Range = NSMakeRange(sub2Start+1, entry.length-(sub2Start+1)-1); //+1 assumes preceded by space, could do check here
+                                                                                            //-1 assumes carriage return
                 NSString * newFileName = [entry substringWithRange:sub2Range];
                 
-//                returnFilePathWithName(newFileName);
+                createPhonebookWithNameEntry(newFileName);
                 
             }
             
-            updatePhonebook(entry);
+//            updatePhonebook(entry);
         }
     }
     return 0;
