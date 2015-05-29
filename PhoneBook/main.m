@@ -41,7 +41,11 @@ void updatePhonebookWithEntry(NSString * entry, NSString * phoneBookName){
 }
 
 NSString * parseAndReturnInputForEntryAndCommand(NSString * entry, NSString * commandString){
-        
+    
+//    create ex_phonebook - takes one input
+//    add 'Jane Doe' '432 123 4321' ex_phonebook - takes 3 inputs
+//    update 'Jane Lin' '643 357 9876' ex_phonebook
+    
     if ([entry rangeOfString:commandString].location != NSNotFound){  //learn regular expressions
         
         NSString * sub1 = commandString;
@@ -57,6 +61,47 @@ NSString * parseAndReturnInputForEntryAndCommand(NSString * entry, NSString * co
         return nil;
     }
 }
+
+void scanEntry(NSString * input){                       //
+    
+//    NSString *str = input;
+    
+//    split function for nstring
+//    nsprocess info
+    
+    NSMutableArray * results = [NSMutableArray array];
+    NSScanner * scanner = [NSScanner scannerWithString:input];
+    NSString * tmp;
+    
+    while ([scanner isAtEnd]==NO)
+    {
+        [scanner scanUpToString:@"'" intoString:NULL]; //move the scanner up to the point you want
+        [scanner scanString:@"'" intoString:NULL];     //scan the the '
+        
+        [scanner scanUpToString:@"'" intoString:&tmp];
+        
+        if ([scanner isAtEnd] == NO)
+            [results addObject:tmp];
+        [scanner scanString:@"'" intoString:NULL];
+    }
+    
+    for (NSString *item in results)
+    {
+        NSLog(@"%@", item);
+    }
+}
+
+
+void segmentInput(NSString * input){
+    NSArray *listItems = [input componentsSeparatedByString:@"'"];
+    for (NSString * aString in listItems){
+        if (![aString isEqualToString:@" "]) {
+            NSLog(@"%@", aString);
+        }
+    }
+
+}
+
 
 
 int main(int argc, const char * argv[]) {
@@ -78,8 +123,11 @@ int main(int argc, const char * argv[]) {
             
            parsedInput = parseAndReturnInputForEntryAndCommand(entry, @"update");
             if (parsedInput){
-                updatePhonebookWithEntry(parsedInput, parsedInput);
+                segmentInput(parsedInput);
             }
+            
+            
+           
 
         }
     }
