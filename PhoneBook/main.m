@@ -6,6 +6,50 @@
 //  Copyright (c) 2015 Nicole Lehrer. All rights reserved.
 //
 
+/*
+ 
+ $ python phonebook.py create ex_phonebook
+ Created phonebook 'ex_phonebook.pb' in the current directory.
+ 
+ $ python phonebook.py add 'Jane Doe' '432 123 4321' ex_phonebook
+ Added an entry to ex_phonebook.pb:
+ Jane Doe    432 123 4321
+ $ python phonebook.py add 'Jane Lin' '509 123 4567' ex_phonebook
+ Added an entry to ex_phonebook.pb:
+ Jane Lin    509 123 4567
+ $ python phonebook.py add 'Jane Lin' '643 357 9876' ex_phonebook
+ Error: Jane Lin already exists in ex_phonebook. Use the 'update' command to change this entry.
+ 
+ $ python phonebook.py update 'Jane Lin' '643 357 9876' ex_phonebook
+ Updated an entry in ex_phonebook.pb.
+ Previous entry:
+ Jane Lin    509 123 4567
+ New entry:
+ Jane Lin    643 357 9876
+ 
+ $ python phonebook.py lookup 'Jane' ex_phonebook
+ Jane Doe    432 123 4321
+ Jane Lin    643 357 9876
+ 
+ $ python phonebook.py reverse-lookup '643 357 9876' ex_phonebook
+ Jane Lin    643 357 9876
+ 
+ $ python phonebook.py remove 'Jane Doe' ex_phonebook
+ Removed an entry from ex_phonebook.pb:
+ Jane Doe    432 123 4321
+ $ python phonebook.py remove 'John Doe' ex_phonebook
+ Error: 'John Doe' does not exist in ex_phonebook.pb
+ 
+*/
+
+
+//create takes one input
+//add/update takes 'name' 'number' file
+//lookup/reverselook 'name' file
+//remove 'name' file
+
+
+
 #import <Foundation/Foundation.h>
 
 NSString * returnFilePathWithName(NSString * fileName){
@@ -92,14 +136,15 @@ void scanEntry(NSString * input){                       //
 }
 
 
-void segmentInput(NSString * input){
-    NSArray *listItems = [input componentsSeparatedByString:@"'"];
-    for (NSString * aString in listItems){
-        if (![aString isEqualToString:@" "]) {
+void segmentStringBy(NSString * input, NSString * separator){
+    
+    NSArray * subStrings = [input componentsSeparatedByString:separator];
+    for (NSString * aString in subStrings){
+        //checks if a subString is only made up of space
+        if ([aString stringByReplacingOccurrencesOfString:@" " withString:@""].length != 0){
             NSLog(@"%@", aString);
         }
     }
-
 }
 
 
@@ -123,7 +168,7 @@ int main(int argc, const char * argv[]) {
             
            parsedInput = parseAndReturnInputForEntryAndCommand(entry, @"update");
             if (parsedInput){
-                segmentInput(parsedInput);
+                segmentStringBy(parsedInput, @"'");
             }
             
             
