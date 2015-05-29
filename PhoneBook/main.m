@@ -26,10 +26,10 @@ NSString * returnFilePathWithName(NSString * fileName){
 ////    [fileContents writeToFile:returnFilePath() atomically:YES encoding:NSUTF8StringEncoding error:nil];
 //}
 
-void createPhonebookWithNameEntry(NSString * name){
+void createPhonebookWithName(NSString * name){
     
     NSString * filePath = returnFilePathWithName(name);
-    NSLog(@"file path is %@", filePath);
+//    NSLog(@"file path is %@", filePath);
     NSString * fileContents = [NSString stringWithContentsOfFile:filePath encoding:NSUTF8StringEncoding error:nil];
     
     if((unsigned long)fileContents.length > 0){
@@ -41,6 +41,38 @@ void createPhonebookWithNameEntry(NSString * name){
     }
 }
 
+void updatePhonebookWithEntry(NSString * name){
+    
+//    NSString * filePath = returnFilePathWithName(name);
+//    NSLog(@"file path is %@", filePath);
+//    NSString * fileContents = [NSString stringWithContentsOfFile:filePath encoding:NSUTF8StringEncoding error:nil];
+//    
+//    if((unsigned long)fileContents.length > 0){
+//        NSLog(@"this file exists");
+//    }
+//    else{
+//        fileContents = @"Name    Number";
+//        [fileContents writeToFile:filePath atomically:YES encoding:NSUTF8StringEncoding error:nil];
+//    }
+}
+
+NSString * parseAndReturnInputForEntryAndCommand(NSString * entry, NSString * commandString){
+    
+    if ([entry rangeOfString:commandString].location != NSNotFound){  //learn regular expressions
+        
+        NSString * sub1 = commandString;
+        
+        int sub1Start = (int)[entry rangeOfString:sub1].location;
+        int sub2Start = sub1Start + (int)sub1.length;
+        
+        NSRange sub2Range = NSMakeRange(sub2Start+1, entry.length-(sub2Start+1)-1); //+1 assumes preceded by space, could do check here
+                                                                                    //-1 assumes carriage return
+        return[entry substringWithRange:sub2Range];
+    }
+    else{
+        return nil;
+    }
+}
 
 
 int main(int argc, const char * argv[]) {
@@ -59,22 +91,12 @@ int main(int argc, const char * argv[]) {
             
             NSString * entry = [NSString stringWithFormat:@"%s", str];
             
-            NSString * commandString = @"create";
-            
-            if ([entry rangeOfString:commandString].location != NSNotFound){  //learn regular expressions
-                
-                NSString * sub1 = commandString;
-            
-                int sub1Start = (int)[entry rangeOfString:sub1].location;
-                int sub2Start = sub1Start + (int)sub1.length;
-              
-                NSRange sub2Range = NSMakeRange(sub2Start+1, entry.length-(sub2Start+1)-1); //+1 assumes preceded by space, could do check here
-                                                                                            //-1 assumes carriage return
-                NSString * newFileName = [entry substringWithRange:sub2Range];
-                
-                createPhonebookWithNameEntry(newFileName);
-                
+            NSString * parsedInput = parseAndReturnInputForEntryAndCommand(entry, @"create");
+            if (parsedInput){
+                createPhonebookWithName(parsedInput);
             }
+            
+            
             
 //            updatePhonebook(entry);
         }
