@@ -8,7 +8,7 @@
 
 #import <Foundation/Foundation.h>
 
-NSString * returnFilePath(){
+NSString * returnFilePathWithName(NSString * fileName){
     
     NSArray * paths = NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES);
     //directory, domain (user, public, network), doExpandTilde
@@ -19,11 +19,11 @@ NSString * returnFilePath(){
 
 void updatePhonebook(NSString * entry){
    
-    NSString * fileContents = [NSString stringWithContentsOfFile:returnFilePath() encoding:NSUTF8StringEncoding error:nil];
-    if (fileContents){
-        fileContents = [fileContents stringByAppendingString:[@"\n" stringByAppendingString:entry]];
-    }
-    [fileContents writeToFile:returnFilePath() atomically:YES encoding:NSUTF8StringEncoding error:nil];
+//    NSString * fileContents = [NSString stringWithContentsOfFile:returnFilePath() encoding:NSUTF8StringEncoding error:nil];
+//    if (fileContents){
+//        fileContents = [fileContents stringByAppendingString:[@"\n" stringByAppendingString:entry]];
+//    }
+//    [fileContents writeToFile:returnFilePath() atomically:YES encoding:NSUTF8StringEncoding error:nil];
 }
 
 
@@ -42,6 +42,25 @@ int main(int argc, const char * argv[]) {
     //            name[strlen (name) - 1] = '\0';
             
             NSString * entry = [NSString stringWithFormat:@"%s", str];
+            
+//            learn how to do regular expressions
+            
+            NSString * commandString = @"create";
+            
+            if ([entry rangeOfString:commandString].location != NSNotFound){
+                
+                NSString * sub1 = commandString;
+                
+                int sub1Start = (int)[entry rangeOfString:sub1].location;
+                int sub2Start = sub1Start + (int)sub1.length;
+              
+                NSRange sub2Range = NSMakeRange(sub2Start+1, entry.length-(sub2Start+1)); //+1 assumes user enter's a space, could do check here
+                
+                NSString * newFileName = [entry substringWithRange:sub2Range];
+                
+//                returnFilePathWithName(newFileName);
+                
+            }
             
             updatePhonebook(entry);
         }
