@@ -107,24 +107,26 @@ NSString * parseAndReturnInputForEntryAndCommand(NSString * entry, NSString * co
 }
 
 
-NSArray * segmentStringBy(NSString * input, NSString * separator){
-    
-    NSArray * subStrings = [input componentsSeparatedByString:separator];
-    NSMutableArray * saved = [[NSMutableArray alloc] init];
+NSArray * segmentEntryByStringCharSet(NSString * userInput, NSString * separator){
+
+    NSCharacterSet *set = [NSCharacterSet characterSetWithCharactersInString:separator];
+    NSArray * subStrings = [userInput componentsSeparatedByCharactersInSet:set];
+    NSMutableArray * usableComponents = [[NSMutableArray alloc] init];
 
     for (NSString * aString in subStrings){
-        if ([aString stringByReplacingOccurrencesOfString:@" " withString:@""].length != 0){  //check if a subString made up of 1 or more spaces
-            NSLog(@"%@", aString);
-            [saved addObject:aString];
+        if ([aString stringByReplacingOccurrencesOfString:@" " withString:@""].length != 0){  //make sure substring is not only spaces
+            NSString *trim = [aString stringByTrimmingCharactersInSet:
+                                       [NSCharacterSet whitespaceCharacterSet]];
+             NSLog(@"%@", trim);
+            [usableComponents addObject:trim];
         }
     }
-    
+    /*
     int i;
-    for (i=0; i<[saved count]; i++){  //need to explicitly use index to avoid enumerating while mutable array being mutated
-        NSLog(@"saved element %@", [saved objectAtIndex:i]);
+    for (i=0; i<[usableComponents count]; i++){  //need to explicitly use index to avoid enumerating while mutable array is being mutated
+        NSLog(@"saved element %@", [usableComponents objectAtIndex:i]);
     }
-    
-    
+     */
     return subStrings;
 }
 
@@ -135,27 +137,32 @@ int main(int argc, const char * argv[]) {
         while (true) {
             
             NSLog(@"Enter some data: ");
-            char str[50] = {0};
+            char str[100] = {0}; // static allocation of string
+            fgets (str, sizeof(str), stdin); //input buffer, bufferlength, stin
 
-            fgets (str, 256, stdin);
+            NSString * entry = [NSString stringWithFormat:@"%s", str]; //convert c string to NSString
             
-            NSString * entry = [NSString stringWithFormat:@"%s", str];
-            
-            
+            segmentEntryByStringCharSet(entry, @"'"); //first segment by ', then cut trailing and leading spaces
             
             
-            NSString * parsedInput = parseAndReturnInputForEntryAndCommand(entry, @"create");
+            //element 0 of array is command, based on this expect the following
+            //create - make a file with name of element 1
+            //add - add 'Jane Doe' '432 123 4321' ex_phonebook
             
             
             
-            if (parsedInput){
-                createPhonebookWithName(parsedInput);
-            }
+//            NSString * parsedInput = parseAndReturnInputForEntryAndCommand(entry, @"create");
             
-           parsedInput = parseAndReturnInputForEntryAndCommand(entry, @"update");
-            if (parsedInput){
-                segmentStringBy(parsedInput, @"'");
-            }
+            
+//            
+//            if (parsedInput){
+//                createPhonebookWithName(parsedInput);
+//            }
+//            
+//           parsedInput = parseAndReturnInputForEntryAndCommand(entry, @"update");
+//            if (parsedInput){
+//                segmentStringBy(parsedInput, @"'");
+//            }
 
         }
     }
