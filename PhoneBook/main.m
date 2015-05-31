@@ -52,27 +52,55 @@
 
 #import <Foundation/Foundation.h>
 
-NSString * returnFilePathWithName(NSString * fileName){
-    
+
+NSString * returnDirectory(){
     NSArray * paths = NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES);
     //directory, domain (user, public, network), doExpandTilde
     NSString * documentDirectory = [paths objectAtIndex:0];
-    NSString * filePath = [NSString stringWithFormat:@"%@/%@.txt", documentDirectory, fileName];
-    return filePath;
+    return documentDirectory;
+}
+
+NSString * returnFilePathWithName(NSString * fileName){
+    
+    NSString * filePath = [NSString stringWithFormat:@"%@/%@.txt", returnDirectory(), fileName];
+    NSLog(@"filePath is %@", filePath);
+    
+        NSFileManager * fileManager = [NSFileManager defaultManager];
+        if ([fileManager fileExistsAtPath:filePath]){
+            NSLog(@"file exists");
+            return filePath;
+        }
+    return nil;
 }
 
 void createPhonebookWithName(NSString * name){
+
+    NSString *content = @"";
+    NSData *fileContents = [content dataUsingEncoding:NSUTF8StringEncoding];
+    [[NSFileManager defaultManager] createFileAtPath:[NSString stringWithFormat:@"%@/%@", returnDirectory(), name]
+                                            contents:fileContents
+                                          attributes:nil];
     
-    NSString * filePath = returnFilePathWithName(name);
-    NSString * fileContents = [NSString stringWithContentsOfFile:filePath encoding:NSUTF8StringEncoding error:nil];
-    
-    if((unsigned long)fileContents.length > 0){
-        NSLog(@"this file exists");
-    }
-    else{
-        fileContents = @"Name    Number";
-        [fileContents writeToFile:filePath atomically:YES encoding:NSUTF8StringEncoding error:nil];
-    }
+//    
+//    //
+//    NSString * filePath = returnFilePathWithName(name);
+//    
+//    if (filePath) {
+//        NSLog(@"filepath exists");
+//    }
+//    else{
+//        NSLog(@"nope");
+//    }
+//    
+//    NSString * fileContents = [NSString stringWithContentsOfFile:filePath encoding:NSUTF8StringEncoding error:nil];
+//    
+//    if((unsigned long)fileContents.length > 0){
+//        NSLog(@"this file exists");
+//    }
+//    else{
+//        fileContents = @"Name    Number";
+//        [fileContents writeToFile:filePath atomically:YES encoding:NSUTF8StringEncoding error:nil];
+//    }
 }
 
 void updatePhonebookWithEntry(NSString * entry, NSString * phoneBookName){
@@ -85,10 +113,6 @@ void updatePhonebookWithEntry(NSString * entry, NSString * phoneBookName){
 }
 
 NSString * parseAndReturnInputForEntryAndCommand(NSString * entry, NSString * commandString){
-    
-//    create ex_phonebook - takes one input
-//    add 'Jane Doe' '432 123 4321' ex_phonebook - takes 3 inputs
-//    update 'Jane Lin' '643 357 9876' ex_phonebook
     
     if ([entry rangeOfString:commandString].location != NSNotFound){  //learn regular expressions
         
@@ -107,7 +131,16 @@ NSString * parseAndReturnInputForEntryAndCommand(NSString * entry, NSString * co
 }
 
 
-NSArray * segmentEntryByStringCharSet(NSString * userInput, NSString * separator){
+
+NSString * returnInputWithLastCharRemoved(NSString * input){
+    if ([input length] > 0) {
+        input = [input substringToIndex:[input length] - 1];
+        return input;
+    }
+    return nil;
+}
+
+NSArray * segmentEntryByStringCharSet(NSString * userInput, NSString * separator){  //method currently can take character set
 
     NSCharacterSet *set = [NSCharacterSet characterSetWithCharactersInString:separator];
     NSArray * subStrings = [userInput componentsSeparatedByCharactersInSet:set];
@@ -116,20 +149,63 @@ NSArray * segmentEntryByStringCharSet(NSString * userInput, NSString * separator
     for (NSString * aString in subStrings){
         if ([aString stringByReplacingOccurrencesOfString:@" " withString:@""].length != 0){  //make sure substring is not only spaces
             NSString *trim = [aString stringByTrimmingCharactersInSet:
-                                       [NSCharacterSet whitespaceCharacterSet]];
-             NSLog(@"%@", trim);
+                                       [NSCharacterSet whitespaceAndNewlineCharacterSet]];
+             NSLog(@"trimmed %@.txt", trim);
             [usableComponents addObject:trim];
         }
     }
+    
     /*
     int i;
     for (i=0; i<[usableComponents count]; i++){  //need to explicitly use index to avoid enumerating while mutable array is being mutated
         NSLog(@"saved element %@", [usableComponents objectAtIndex:i]);
     }
      */
-    return subStrings;
+    
+    return usableComponents;
 }
 
+
+void handleCommand(NSArray * parsedInputs){
+    
+//    first element is command
+//    if command is create
+//        there should be 2 args
+//        check if phone book exists
+//        create phone book
+    
+    
+    if ([[parsedInputs objectAtIndex:0] isEqualToString:@"create"]) {
+        if ([parsedInputs count] == 2) {
+            NSString * fileName = [parsedInputs objectAtIndex:1];
+            //check if file exists
+            if(returnFilePathWithName(fileName)){
+                NSLog(@"phonebook already exists");
+            }
+            else{
+                NSLog(@"new phone book is %@", [NSString stringWithFormat:@"%@.txt", fileName]);
+
+                createPhonebookWithName([NSString stringWithFormat:@"%@.txt", fileName]);
+            }
+
+            
+        }
+    }
+    
+    
+    
+//    add 'Jane Doe' '432 123 4321' ex_phonebook
+    
+//    if command is add
+//        there should be 4 elements
+//        check if first key exists in text file (plist would prob be better)
+//              if key exists print error
+//              if key doesnt exist then write to file
+    
+//    //    if command is lookup
+
+
+}
 
 int main(int argc, const char * argv[]) {
     @autoreleasepool {
@@ -137,32 +213,13 @@ int main(int argc, const char * argv[]) {
         while (true) {
             
             NSLog(@"Enter some data: ");
+            
             char str[100] = {0}; // static allocation of string
             fgets (str, sizeof(str), stdin); //input buffer, bufferlength, stin
 
             NSString * entry = [NSString stringWithFormat:@"%s", str]; //convert c string to NSString
-            
-            segmentEntryByStringCharSet(entry, @"'"); //first segment by ', then cut trailing and leading spaces
-            
-            
-            //element 0 of array is command, based on this expect the following
-            //create - make a file with name of element 1
-            //add - add 'Jane Doe' '432 123 4321' ex_phonebook
-            
-            
-            
-//            NSString * parsedInput = parseAndReturnInputForEntryAndCommand(entry, @"create");
-            
-            
-//            
-//            if (parsedInput){
-//                createPhonebookWithName(parsedInput);
-//            }
-//            
-//           parsedInput = parseAndReturnInputForEntryAndCommand(entry, @"update");
-//            if (parsedInput){
-//                segmentStringBy(parsedInput, @"'");
-//            }
+            NSArray * parsedStrings = segmentEntryByStringCharSet(entry, @" ");//right now segmenting for create
+            handleCommand(parsedStrings);
 
         }
     }
