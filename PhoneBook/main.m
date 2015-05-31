@@ -166,7 +166,7 @@ NSArray * segmentEntryByStringCharSet(NSString * userInput, NSString * separator
 }
 
 
-void handleCommand(NSArray * parsedInputs){
+void handleInput(NSString * input){
     
 //    first element is command
 //    if command is create
@@ -174,22 +174,26 @@ void handleCommand(NSArray * parsedInputs){
 //        check if phone book exists
 //        create phone book
     
-    
-    if ([[parsedInputs objectAtIndex:0] isEqualToString:@"create"]) {
-        if ([parsedInputs count] == 2) {
-            NSString * fileName = [parsedInputs objectAtIndex:1];
+    NSArray * parsedInputsBySpace = segmentEntryByStringCharSet(input, @" ");//right now segmenting for create
+
+    if ([[parsedInputsBySpace objectAtIndex:0] isEqualToString:@"create"]) {
+        if ([parsedInputsBySpace count] == 2) {
+            NSString * fileName = [parsedInputsBySpace objectAtIndex:1];
             //check if file exists
             if(returnFilePathWithName(fileName)){
                 NSLog(@"phonebook already exists");
             }
             else{
                 NSLog(@"new phone book is %@", [NSString stringWithFormat:@"%@.txt", fileName]);
-
                 createPhonebookWithName([NSString stringWithFormat:@"%@.txt", fileName]);
             }
-
-            
         }
+    }
+    else{
+        
+        //parse inputs by '
+        NSArray * parsedInputsBySingleQuote = segmentEntryByStringCharSet(input, @" ");//right now segmenting for create
+        //handle diff commands
     }
     
     
@@ -218,8 +222,7 @@ int main(int argc, const char * argv[]) {
             fgets (str, sizeof(str), stdin); //input buffer, bufferlength, stin
 
             NSString * entry = [NSString stringWithFormat:@"%s", str]; //convert c string to NSString
-            NSArray * parsedStrings = segmentEntryByStringCharSet(entry, @" ");//right now segmenting for create
-            handleCommand(parsedStrings);
+            handleInput(entry);
 
         }
     }
