@@ -183,21 +183,28 @@ void handleInput(NSString * input){
     }
     
     NSArray * parsedByQuote = segmentEntryByStringCharSet(input, @"'");
-    
+    BOOL commandFound = NO;
+
     if (([commandName isEqualToString:@"add"] ||
          [commandName isEqualToString:@"change"]) && [parsedByQuote count] == 4) {
         
         personName = [parsedByQuote objectAtIndex:1];
         phoneNumber = [parsedByQuote objectAtIndex:2];
+        commandFound = YES;
     }
     
     if (([commandName isEqualToString:@"remove"] || [commandName isEqualToString:@"lookup"]) && [parsedByQuote count] == 3) {
         personName = [parsedByQuote objectAtIndex:1];
+        commandFound = YES;
 
     }
     
-
-    updatePlistWithFileNamePersonNumber(fileName, personName, phoneNumber, commandName);
+    if (commandFound) {
+        updatePlistWithFileNamePersonNumber(fileName, personName, phoneNumber, commandName);
+    }
+    else{
+        NSLog(@"command not found");
+    }
 }
 
 int main(int argc, const char * argv[]) {
