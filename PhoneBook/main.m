@@ -86,11 +86,17 @@ void updatePlistWithFileNamePersonNumber(NSString * fileName, NSString * personN
     NSMutableDictionary * data;
     if ([fileManager fileExistsAtPath: filePath]) {
         data = [[NSMutableDictionary alloc] initWithContentsOfFile: filePath];
+        for (NSString * key in [data allKeys]) {
+            NSLog(@"key is %@", key);
+            if ([key isEqualToString:personName]) {
+                NSLog(@"Person already exists - use update command to change info");
+                return;
+            }
+        }
         [data setObject:phoneNumber forKey:personName];
     }
     else {
         data = [[NSMutableDictionary alloc] init];
-//        [data setObject:@"number" forKey:@"name"];
     }
     
     [data writeToFile:filePath atomically:YES];
