@@ -73,7 +73,7 @@ NSString * returnDirectory(){
 //    return nil;
 //}
 
-void updatePlistWithFileNamePersonNumber(NSString * fileName, NSString * personName, NSString * phoneNumber){
+void updatePlistWithFileNamePersonNumber(NSString * fileName, NSString * personName, NSString * phoneNumber, BOOL isChanging){
 
     NSString * fileNameWithExt = [NSString stringWithFormat:@"%@.plist", fileName];
     NSString * filePath = [returnDirectory() stringByAppendingPathComponent:fileNameWithExt];
@@ -85,11 +85,12 @@ void updatePlistWithFileNamePersonNumber(NSString * fileName, NSString * personN
 
     NSMutableDictionary * data;
     if ([fileManager fileExistsAtPath: filePath]) {
+        
         data = [[NSMutableDictionary alloc] initWithContentsOfFile: filePath];
+        
         for (NSString * key in [data allKeys]) {
-            NSLog(@"key is %@", key);
-            if ([key isEqualToString:personName]) {
-                NSLog(@"Person already exists - use update command to change info");
+            if ([key isEqualToString:personName] && isChanging == NO) { //isChainging flags if it is an intentional 'change' or not
+                NSLog(@"Person already exists - use change command to change phone number");
                 return;
             }
         }
@@ -100,18 +101,6 @@ void updatePlistWithFileNamePersonNumber(NSString * fileName, NSString * personN
     }
     
     [data writeToFile:filePath atomically:YES];
-   
-    
-    //To insert the data into the plist
-//    [data setObject:@"iPhone 6 Plus" forKey:@"value"];
-//    [data writeToFile:path atomically:YES];
-
-    
-    //To reterive the data from the plist
-//    NSMutableDictionary *savedValue = [[NSMutableDictionary alloc] initWithContentsOfFile: path];
-//    NSString *value = [savedValue objectForKey:@"value"];
-//    NSLog(@"%@",value);
-    
 }
 
 NSString * parseAndReturnInputForEntryAndCommand(NSString * entry, NSString * commandString){
@@ -178,15 +167,24 @@ void handleInput(NSString * input){
 
     if ([[parsedBySpace objectAtIndex:0] isEqualToString:@"create"] && [parsedBySpace count] == 2) { //check for args count
         
-        updatePlistWithFileNamePersonNumber(fileName, nil, nil);
+        updatePlistWithFileNamePersonNumber(fileName, nil, nil, NO);
+        return;
     }
     
-    if ([[parsedBySpace objectAtIndex:0] isEqualToString:@"add"]) {
+    NSArray * parsedByQuote = segmentEntryByStringCharSet(input, @"'");
+    
+    if ([[parsedBySpace objectAtIndex:0] isEqualToString:@"add"] && [parsedByQuote count] == 4) {
         
-        NSArray * parsedByQuote = segmentEntryByStringCharSet(input, @"'");
         NSString * personName = [parsedByQuote objectAtIndex:1];
         NSString * phoneNumber = [parsedByQuote objectAtIndex:2];
-        updatePlistWithFileNamePersonNumber(fileName, personName, phoneNumber);
+        updatePlistWithFileNamePersonNumber(fileName, personName, phoneNumber, NO);
+    }
+    
+    if ([[parsedBySpace objectAtIndex:0] isEqualToString:@"change"] && [parsedByQuote count] == 4) {
+        
+        NSString * personName = [parsedByQuote objectAtIndex:1];
+        NSString * phoneNumber = [parsedByQuote objectAtIndex:2];
+        updatePlistWithFileNamePersonNumber(fileName, personName, phoneNumber, YES);
     }
 }
 
