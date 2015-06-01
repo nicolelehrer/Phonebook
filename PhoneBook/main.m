@@ -73,24 +73,31 @@ NSString * returnDirectory(){
 //    return nil;
 //}
 
-void updatePlistWithFileNamePersonNumber(NSString * fileName, NSString * personName, NSString * phoneNumber, BOOL isChanging){
+void updatePlistWithFileNamePersonNumber(NSString * fileName, NSString * personName, NSString * phoneNumber, NSString * commandName){
 
     NSString * fileNameWithExt = [NSString stringWithFormat:@"%@.plist", fileName];
     NSString * filePath = [returnDirectory() stringByAppendingPathComponent:fileNameWithExt];
     NSFileManager * fileManager = [NSFileManager defaultManager];
-    
-    if (![fileManager fileExistsAtPath:filePath]) {
-        filePath = [returnDirectory() stringByAppendingPathComponent:fileNameWithExt];
-    }
 
     NSMutableDictionary * data;
+    
     if ([fileManager fileExistsAtPath: filePath]) {
+        
+        if ([commandName isEqualToString:@"create"]) { //first check for 'create'
+            NSLog(@"file already exists");
+            return;
+        }
         
         data = [[NSMutableDictionary alloc] initWithContentsOfFile: filePath];
         
         for (NSString * key in [data allKeys]) {
-            if ([key isEqualToString:personName] && isChanging == NO) { //isChainging flags if it is an intentional 'change' or not
+            if ([key isEqualToString:personName] && [commandName isEqualToString:@"add"]) { //checks for intentional change
                 NSLog(@"Person already exists - use change command to change phone number");
+                return;
+            }
+            if ([key isEqualToString:personName] && [commandName isEqualToString:@"remove"]) { //checks for intentional change
+                [data removeObjectForKey:personName];
+                [data writeToFile:filePath atomically:YES];
                 return;
             }
         }
@@ -99,7 +106,6 @@ void updatePlistWithFileNamePersonNumber(NSString * fileName, NSString * personN
     else {
         data = [[NSMutableDictionary alloc] init];
     }
-    
     [data writeToFile:filePath atomically:YES];
 }
 
@@ -163,46 +169,31 @@ NSArray * segmentEntryByStringCharSet(NSString * userInput, NSString * separator
 void handleInput(NSString * input){
     
     NSArray * parsedBySpace = segmentEntryByStringCharSet(input, @" ");//right now segmenting for create
+    NSString * commandName = [parsedBySpace objectAtIndex:0];
     NSString * fileName = [parsedBySpace lastObject];
-
-    if ([[parsedBySpace objectAtIndex:0] isEqualToString:@"create"] && [parsedBySpace count] == 2) { //check for args count
-        
-        updatePlistWithFileNamePersonNumber(fileName, nil, nil, NO);
+    NSString * personName = nil;
+    NSString * phoneNumber = nil;
+    
+    if ([commandName isEqualToString:@"create"] && [parsedBySpace count] == 2) { //check for args count
+        updatePlistWithFileNamePersonNumber(fileName, nil, nil, commandName);
         return;
     }
     
     NSArray * parsedByQuote = segmentEntryByStringCharSet(input, @"'");
     
-    if ([[parsedBySpace objectAtIndex:0] isEqualToString:@"add"] && [parsedByQuote count] == 4) {
+    if (([commandName isEqualToString:@"add"] ||
+         [commandName isEqualToString:@"change"]) && [parsedByQuote count] == 4) {
         
-        NSString * personName = [parsedByQuote objectAtIndex:1];
-        NSString * phoneNumber = [parsedByQuote objectAtIndex:2];
-        updatePlistWithFileNamePersonNumber(fileName, personName, phoneNumber, NO);
+        personName = [parsedByQuote objectAtIndex:1];
+        phoneNumber = [parsedByQuote objectAtIndex:2];
     }
     
-    if ([[parsedBySpace objectAtIndex:0] isEqualToString:@"change"] && [parsedByQuote count] == 4) {
+    if ([commandName isEqualToString:@"remove"] && [parsedByQuote count] == 3) {
         
-        NSString * personName = [parsedByQuote objectAtIndex:1];
-        NSString * phoneNumber = [parsedByQuote objectAtIndex:2];
-        updatePlistWithFileNamePersonNumber(fileName, personName, phoneNumber, YES);
+        personName = [parsedByQuote objectAtIndex:1];
     }
-}
-
-
-void loadFileFromPath(NSString * filePath){
     
-//    NSString * fileContents = [NSString stringWithContentsOfFile:filePath encoding:NSUTF8StringEncoding error:nil];
-    NSDictionary * dict = [[NSDictionary alloc] initWithContentsOfFile:filePath];
-    NSLog(@"dict size is %lu", [dict count]);
-    
-//        if((unsigned long)fileContents.length > 0){
-//            NSLog(@"this file exists");
-//        }
-//        else{
-//            fileContents = @"Name    Number";
-//            [fileContents writeToFile:filePath atomically:YES encoding:NSUTF8StringEncoding error:nil];
-//        }
-
+    updatePlistWithFileNamePersonNumber(fileName, personName, phoneNumber, commandName);
 }
 
 int main(int argc, const char * argv[]) {
