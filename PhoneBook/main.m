@@ -73,6 +73,34 @@ NSString * returnDirectory(){
 //    return nil;
 //}
 
+NSArray * segmentEntryByStringCharSet(NSString * userInput, NSString * separator){  //method currently can take character set
+    
+    NSCharacterSet *set = [NSCharacterSet characterSetWithCharactersInString:separator];
+    NSArray * subStrings = [userInput componentsSeparatedByCharactersInSet:set];
+    NSMutableArray * usableComponents = [[NSMutableArray alloc] init];
+    
+    for (NSString * aString in subStrings){
+        if ([aString stringByReplacingOccurrencesOfString:@" " withString:@""].length != 0){  //make sure substring is not only spaces
+            NSString *trim = [aString stringByTrimmingCharactersInSet:
+                              [NSCharacterSet whitespaceAndNewlineCharacterSet]];
+            //             NSLog(@"trimmed %@.txt", trim);
+            [usableComponents addObject:trim];
+        }
+    }
+    
+    /*
+     int i;
+     for (i=0; i<[usableComponents count]; i++){  //need to explicitly use index to avoid enumerating while mutable array is being mutated
+     NSLog(@"saved element %@", [usableComponents objectAtIndex:i]);
+     }
+     */
+    
+    
+    
+    
+    return usableComponents;
+}
+
 void updatePlistWithFileNamePersonNumber(NSString * fileName, NSString * personName, NSString * phoneNumber, NSString * commandName){
 
     NSString * fileNameWithExt = [NSString stringWithFormat:@"%@.plist", fileName];
@@ -89,6 +117,7 @@ void updatePlistWithFileNamePersonNumber(NSString * fileName, NSString * personN
         }
         
         data = [[NSMutableDictionary alloc] initWithContentsOfFile: filePath];
+        NSMutableArray * matches = [[NSMutableArray alloc] init];
         
         for (NSString * key in [data allKeys]) {
             if ([key isEqualToString:personName] && [commandName isEqualToString:@"add"]) { //checks for intentional change
@@ -100,34 +129,34 @@ void updatePlistWithFileNamePersonNumber(NSString * fileName, NSString * personN
                 [data writeToFile:filePath atomically:YES];
                 return;
             }
+            
+            NSArray * splitNames = segmentEntryByStringCharSet(key, @" ");
+            if ([splitNames containsObject:personName] && [commandName isEqualToString:@"lookup"]) { //checks for intentional change
+                [matches addObject:key];
+//                return;
+            }
+
         }
-        [data setObject:phoneNumber forKey:personName];
+        
+        if ([commandName isEqualToString:@"lookup"]) {
+            if ([matches count]>0) {
+                for (NSString * match in matches){
+                    NSLog(@"%@ : %@", match, [data objectForKey:match]);
+                }
+            }
+            else{
+                NSLog(@"No-one found by that name");
+            }
+        }
+        else{
+            [data setObject:phoneNumber forKey:personName];
+        }
     }
     else {
         data = [[NSMutableDictionary alloc] init];
     }
     [data writeToFile:filePath atomically:YES];
 }
-
-NSString * parseAndReturnInputForEntryAndCommand(NSString * entry, NSString * commandString){
-    
-    if ([entry rangeOfString:commandString].location != NSNotFound){  //learn regular expressions
-        
-        NSString * sub1 = commandString;
-        
-        int sub1Start = (int)[entry rangeOfString:sub1].location;
-        int sub2Start = sub1Start + (int)sub1.length;
-        
-        NSRange sub2Range = NSMakeRange(sub2Start+1, entry.length-(sub2Start+1)-1); //+1 assumes preceded by space, could do check here
-                                                                                    //-1 assumes carriage return
-        return[entry substringWithRange:sub2Range];
-    }
-    else{
-        return nil;
-    }
-}
-
-
 
 NSString * returnInputWithLastCharRemoved(NSString * input){
     if ([input length] > 0) {
@@ -137,33 +166,7 @@ NSString * returnInputWithLastCharRemoved(NSString * input){
     return nil;
 }
 
-NSArray * segmentEntryByStringCharSet(NSString * userInput, NSString * separator){  //method currently can take character set
 
-    NSCharacterSet *set = [NSCharacterSet characterSetWithCharactersInString:separator];
-    NSArray * subStrings = [userInput componentsSeparatedByCharactersInSet:set];
-    NSMutableArray * usableComponents = [[NSMutableArray alloc] init];
-
-    for (NSString * aString in subStrings){
-        if ([aString stringByReplacingOccurrencesOfString:@" " withString:@""].length != 0){  //make sure substring is not only spaces
-            NSString *trim = [aString stringByTrimmingCharactersInSet:
-                                       [NSCharacterSet whitespaceAndNewlineCharacterSet]];
-//             NSLog(@"trimmed %@.txt", trim);
-            [usableComponents addObject:trim];
-        }
-    }
-    
-    /*
-    int i;
-    for (i=0; i<[usableComponents count]; i++){  //need to explicitly use index to avoid enumerating while mutable array is being mutated
-        NSLog(@"saved element %@", [usableComponents objectAtIndex:i]);
-    }
-     */
-    
-    
-    
-    
-    return usableComponents;
-}
 
 
 void handleInput(NSString * input){
@@ -188,11 +191,12 @@ void handleInput(NSString * input){
         phoneNumber = [parsedByQuote objectAtIndex:2];
     }
     
-    if ([commandName isEqualToString:@"remove"] && [parsedByQuote count] == 3) {
-        
+    if (([commandName isEqualToString:@"remove"] || [commandName isEqualToString:@"lookup"]) && [parsedByQuote count] == 3) {
         personName = [parsedByQuote objectAtIndex:1];
+
     }
     
+
     updatePlistWithFileNamePersonNumber(fileName, personName, phoneNumber, commandName);
 }
 
