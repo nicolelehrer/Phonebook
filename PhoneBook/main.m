@@ -60,56 +60,52 @@ NSString * returnDirectory(){
     return documentDirectory;
 }
 
-NSString * returnFilePathWithName(NSString * fileName){
-    
-    NSString * filePath = [NSString stringWithFormat:@"%@/%@.txt", returnDirectory(), fileName];
-    NSLog(@"filePath is %@", filePath);
-    
-        NSFileManager * fileManager = [NSFileManager defaultManager];
-        if ([fileManager fileExistsAtPath:filePath]){
-            NSLog(@"file exists");
-            return filePath;
-        }
-    return nil;
-}
+//NSString * returnPlistPathWithName(NSString * fileName){
+//    
+//    NSString * fileNameWithExt = [NSString stringWithFormat:@"%@.plist", fileName];
+//    NSString * filePath = [returnDirectory() stringByAppendingPathComponent:fileNameWithExt];
+//
+//    NSFileManager * fileManager = [NSFileManager defaultManager];
+//    if ([fileManager fileExistsAtPath:filePath]){
+////            NSLog(@"file exists");
+//        return filePath;
+//    }
+//    return nil;
+//}
 
-void createPhonebookWithName(NSString * name){
+void updatePlistWithFileNamePersonNumber(NSString * fileName, NSString * personName, NSString * phoneNumber){
 
-    NSString *content = @"";
-    NSData *fileContents = [content dataUsingEncoding:NSUTF8StringEncoding];
-    [[NSFileManager defaultManager] createFileAtPath:[NSString stringWithFormat:@"%@/%@", returnDirectory(), name]
-                                            contents:fileContents
-                                          attributes:nil];
+    NSString * fileNameWithExt = [NSString stringWithFormat:@"%@.plist", fileName];
+    NSString * filePath = [returnDirectory() stringByAppendingPathComponent:fileNameWithExt];
+    NSFileManager * fileManager = [NSFileManager defaultManager];
     
-//    
-//    //
-//    NSString * filePath = returnFilePathWithName(name);
-//    
-//    if (filePath) {
-//        NSLog(@"filepath exists");
-//    }
-//    else{
-//        NSLog(@"nope");
-//    }
-//    
-//    NSString * fileContents = [NSString stringWithContentsOfFile:filePath encoding:NSUTF8StringEncoding error:nil];
-//    
-//    if((unsigned long)fileContents.length > 0){
-//        NSLog(@"this file exists");
-//    }
-//    else{
-//        fileContents = @"Name    Number";
-//        [fileContents writeToFile:filePath atomically:YES encoding:NSUTF8StringEncoding error:nil];
-//    }
-}
+    if (![fileManager fileExistsAtPath:filePath]) {
+        filePath = [returnDirectory() stringByAppendingPathComponent:fileNameWithExt];
+    }
 
-void updatePhonebookWithEntry(NSString * entry, NSString * phoneBookName){
+    NSMutableDictionary * data;
+    if ([fileManager fileExistsAtPath: filePath]) {
+        data = [[NSMutableDictionary alloc] initWithContentsOfFile: filePath];
+        [data setObject:phoneNumber forKey:personName];
+    }
+    else {
+        data = [[NSMutableDictionary alloc] init];
+//        [data setObject:@"number" forKey:@"name"];
+    }
     
-    NSString * filePath = returnFilePathWithName(phoneBookName);
-    NSString * fileContents = [NSString stringWithContentsOfFile:filePath encoding:NSUTF8StringEncoding error:nil];
-    [[fileContents stringByAppendingString:[@"\n" stringByAppendingString:entry]]
-                               writeToFile:filePath
-                                atomically:YES encoding:NSUTF8StringEncoding error:nil];
+    [data writeToFile:filePath atomically:YES];
+   
+    
+    //To insert the data into the plist
+//    [data setObject:@"iPhone 6 Plus" forKey:@"value"];
+//    [data writeToFile:path atomically:YES];
+
+    
+    //To reterive the data from the plist
+//    NSMutableDictionary *savedValue = [[NSMutableDictionary alloc] initWithContentsOfFile: path];
+//    NSString *value = [savedValue objectForKey:@"value"];
+//    NSLog(@"%@",value);
+    
 }
 
 NSString * parseAndReturnInputForEntryAndCommand(NSString * entry, NSString * commandString){
@@ -150,7 +146,7 @@ NSArray * segmentEntryByStringCharSet(NSString * userInput, NSString * separator
         if ([aString stringByReplacingOccurrencesOfString:@" " withString:@""].length != 0){  //make sure substring is not only spaces
             NSString *trim = [aString stringByTrimmingCharactersInSet:
                                        [NSCharacterSet whitespaceAndNewlineCharacterSet]];
-             NSLog(@"trimmed %@.txt", trim);
+//             NSLog(@"trimmed %@.txt", trim);
             [usableComponents addObject:trim];
         }
     }
@@ -162,52 +158,46 @@ NSArray * segmentEntryByStringCharSet(NSString * userInput, NSString * separator
     }
      */
     
+    
+    
+    
     return usableComponents;
 }
 
 
 void handleInput(NSString * input){
     
-//    first element is command
-//    if command is create
-//        there should be 2 args
-//        check if phone book exists
-//        create phone book
-    
-    NSArray * parsedInputsBySpace = segmentEntryByStringCharSet(input, @" ");//right now segmenting for create
+    NSArray * parsedBySpace = segmentEntryByStringCharSet(input, @" ");//right now segmenting for create
+    NSString * fileName = [parsedBySpace lastObject];
 
-    if ([[parsedInputsBySpace objectAtIndex:0] isEqualToString:@"create"]) {
-        if ([parsedInputsBySpace count] == 2) {
-            NSString * fileName = [parsedInputsBySpace objectAtIndex:1];
-            //check if file exists
-            if(returnFilePathWithName(fileName)){
-                NSLog(@"phonebook already exists");
-            }
-            else{
-                NSLog(@"new phone book is %@", [NSString stringWithFormat:@"%@.txt", fileName]);
-                createPhonebookWithName([NSString stringWithFormat:@"%@.txt", fileName]);
-            }
-        }
-    }
-    else{
+    if ([[parsedBySpace objectAtIndex:0] isEqualToString:@"create"] && [parsedBySpace count] == 2) { //check for args count
         
-        //parse inputs by '
-        NSArray * parsedInputsBySingleQuote = segmentEntryByStringCharSet(input, @" ");//right now segmenting for create
-        //handle diff commands
+        updatePlistWithFileNamePersonNumber(fileName, nil, nil);
     }
     
-    
-    
-//    add 'Jane Doe' '432 123 4321' ex_phonebook
-    
-//    if command is add
-//        there should be 4 elements
-//        check if first key exists in text file (plist would prob be better)
-//              if key exists print error
-//              if key doesnt exist then write to file
-    
-//    //    if command is lookup
+    if ([[parsedBySpace objectAtIndex:0] isEqualToString:@"add"]) {
+        
+        NSArray * parsedByQuote = segmentEntryByStringCharSet(input, @"'");
+        NSString * personName = [parsedByQuote objectAtIndex:1];
+        NSString * phoneNumber = [parsedByQuote objectAtIndex:2];
+        updatePlistWithFileNamePersonNumber(fileName, personName, phoneNumber);
+    }
+}
 
+
+void loadFileFromPath(NSString * filePath){
+    
+//    NSString * fileContents = [NSString stringWithContentsOfFile:filePath encoding:NSUTF8StringEncoding error:nil];
+    NSDictionary * dict = [[NSDictionary alloc] initWithContentsOfFile:filePath];
+    NSLog(@"dict size is %lu", [dict count]);
+    
+//        if((unsigned long)fileContents.length > 0){
+//            NSLog(@"this file exists");
+//        }
+//        else{
+//            fileContents = @"Name    Number";
+//            [fileContents writeToFile:filePath atomically:YES encoding:NSUTF8StringEncoding error:nil];
+//        }
 
 }
 
