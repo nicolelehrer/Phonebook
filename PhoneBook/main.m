@@ -118,6 +118,9 @@ void updatePlistWithFileNamePersonNumber(NSString * fileName, NSString * personN
         
         data = [[NSMutableDictionary alloc] initWithContentsOfFile: filePath];
         NSMutableArray * matches = [[NSMutableArray alloc] init];
+        NSMutableArray * reverseResults = [[NSMutableArray alloc] init];
+        NSMutableArray * reverseMatches = [[NSMutableArray alloc] init];
+
         
         for (NSString * key in [data allKeys]) {
             if ([key isEqualToString:personName] && [commandName isEqualToString:@"add"]) { //checks for intentional change
@@ -135,10 +138,15 @@ void updatePlistWithFileNamePersonNumber(NSString * fileName, NSString * personN
                 [matches addObject:key];
 //                return;
             }
+            if ([commandName isEqualToString:@"reverse-lookup"]) { //checks for intentional change
+                if ([[data objectForKey:key] isEqualToString:phoneNumber]) {
+                    [matches addObject:key];
+                }
+            }
 
         }
         
-        if ([commandName isEqualToString:@"lookup"]) {
+        if ([commandName isEqualToString:@"lookup"] || [commandName isEqualToString:@"reverse-lookup"]) {
             if ([matches count]>0) {
                 for (NSString * match in matches){
                     NSLog(@"%@ : %@", match, [data objectForKey:match]);
@@ -193,8 +201,8 @@ void handleInput(NSString * input){
         commandFound = YES;
     }
     
-    if (([commandName isEqualToString:@"remove"] || [commandName isEqualToString:@"lookup"]) && [parsedByQuote count] == 3) {
-        personName = [parsedByQuote objectAtIndex:1];
+    if (([commandName isEqualToString:@"remove"] || [commandName isEqualToString:@"lookup"] || [commandName isEqualToString:@"reverse-lookup"]) && [parsedByQuote count] == 3) {
+        phoneNumber = [parsedByQuote objectAtIndex:1];
         commandFound = YES;
 
     }
