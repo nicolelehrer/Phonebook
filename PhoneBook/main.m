@@ -99,6 +99,10 @@ void updatePlistWithFileNamePersonNumber(NSString * fileName, NSString * personN
         }
     }
     else {
+        
+        if (![commandName isEqualToString:@"create"]) {
+            NSLog(@"You created a new PhoneBook called %@", fileName);
+        }
         data = [[NSMutableDictionary alloc] init];
     }
     [data writeToFile:filePath atomically:YES];
