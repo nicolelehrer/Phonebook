@@ -51,9 +51,8 @@ void updatePlistWithFileNamePersonNumber(NSString * fileName, NSString * personN
     NSMutableDictionary * data;
     
     if ([fileManager fileExistsAtPath: filePath]) {
-        
         if ([commandName isEqualToString:@"create"]) { //first check for 'create'
-            NSLog(@"file already exists");
+            NSLog(@"Phonebook named %@ already exists", fileName);
             return;
         }
         
@@ -65,18 +64,17 @@ void updatePlistWithFileNamePersonNumber(NSString * fileName, NSString * personN
                 NSLog(@"Person already exists - use change command to change phone number");
                 return;
             }
-            if ([key isEqualToString:personName] && [commandName isEqualToString:@"remove"]) { //checks for intentional change
+            if ([key isEqualToString:personName] && [commandName isEqualToString:@"remove"]) {
                 [data removeObjectForKey:personName];
                 [data writeToFile:filePath atomically:YES];
                 return;
             }
             
             NSArray * splitNames = segmentUserInputByStringCharSet(key, @" ");
-            if ([splitNames containsObject:personName] && [commandName isEqualToString:@"lookup"]) { //checks for intentional change
+            if ([splitNames containsObject:personName] && [commandName isEqualToString:@"lookup"]) {
                 [matches addObject:key];
-//                return;
             }
-            if ([commandName isEqualToString:@"reverse-lookup"]) { //checks for intentional change
+            if ([commandName isEqualToString:@"reverse-lookup"]) {
                 if ([[data objectForKey:key] isEqualToString:phoneNumber]) {
                     [matches addObject:key];
                 }
@@ -91,7 +89,7 @@ void updatePlistWithFileNamePersonNumber(NSString * fileName, NSString * personN
                 }
             }
             else{
-                NSLog(@"No-one found by that name");
+                NSLog(@"No person found");
             }
         }
         else{
@@ -103,7 +101,11 @@ void updatePlistWithFileNamePersonNumber(NSString * fileName, NSString * personN
         if (![commandName isEqualToString:@"create"]) {
             NSLog(@"You created a new PhoneBook called %@", fileName);
         }
-        data = [[NSMutableDictionary alloc] init];
+        else{
+            //don't want to lose data just added in previous case
+            //in this case making a new phonebook using a create
+            data = [[NSMutableDictionary alloc] init];
+        }
     }
     [data writeToFile:filePath atomically:YES];
 }
