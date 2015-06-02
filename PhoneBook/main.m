@@ -6,49 +6,6 @@
 //  Copyright (c) 2015 Nicole Lehrer. All rights reserved.
 //
 
-/*
- 
- $ python phonebook.py create ex_phonebook
- Created phonebook 'ex_phonebook.pb' in the current directory.
- 
- $ python phonebook.py add 'Jane Doe' '432 123 4321' ex_phonebook
- Added an entry to ex_phonebook.pb:
- Jane Doe    432 123 4321
- $ python phonebook.py add 'Jane Lin' '509 123 4567' ex_phonebook
- Added an entry to ex_phonebook.pb:
- Jane Lin    509 123 4567
- $ python phonebook.py add 'Jane Lin' '643 357 9876' ex_phonebook
- Error: Jane Lin already exists in ex_phonebook. Use the 'update' command to change this entry.
- 
- $ python phonebook.py update 'Jane Lin' '643 357 9876' ex_phonebook
- Updated an entry in ex_phonebook.pb.
- Previous entry:
- Jane Lin    509 123 4567
- New entry:
- Jane Lin    643 357 9876
- 
- $ python phonebook.py lookup 'Jane' ex_phonebook
- Jane Doe    432 123 4321
- Jane Lin    643 357 9876
- 
- $ python phonebook.py reverse-lookup '643 357 9876' ex_phonebook
- Jane Lin    643 357 9876
- 
- $ python phonebook.py remove 'Jane Doe' ex_phonebook
- Removed an entry from ex_phonebook.pb:
- Jane Doe    432 123 4321
- $ python phonebook.py remove 'John Doe' ex_phonebook
- Error: 'John Doe' does not exist in ex_phonebook.pb
- 
-*/
-
-
-//create takes one input
-//add/update takes 'name' 'number' file
-//lookup/reverselook 'name' file
-//remove 'name' file
-
-
 
 #import <Foundation/Foundation.h>
 
@@ -60,46 +17,30 @@ NSString * returnDirectory(){
     return documentDirectory;
 }
 
-//NSString * returnPlistPathWithName(NSString * fileName){
-//    
-//    NSString * fileNameWithExt = [NSString stringWithFormat:@"%@.plist", fileName];
-//    NSString * filePath = [returnDirectory() stringByAppendingPathComponent:fileNameWithExt];
-//
-//    NSFileManager * fileManager = [NSFileManager defaultManager];
-//    if ([fileManager fileExistsAtPath:filePath]){
-////            NSLog(@"file exists");
-//        return filePath;
-//    }
-//    return nil;
-//}
-
-NSArray * segmentEntryByStringCharSet(NSString * userInput, NSString * separator){  //method currently can take character set
+NSArray * segmentUserInputByStringCharSet(NSString * userInput, NSString * separator){
     
     NSCharacterSet *set = [NSCharacterSet characterSetWithCharactersInString:separator];
     NSArray * subStrings = [userInput componentsSeparatedByCharactersInSet:set];
-    NSMutableArray * usableComponents = [[NSMutableArray alloc] init];
+    NSMutableArray * usableStrings = [[NSMutableArray alloc] init];
     
     for (NSString * aString in subStrings){
         if ([aString stringByReplacingOccurrencesOfString:@" " withString:@""].length != 0){  //make sure substring is not only spaces
-            NSString *trim = [aString stringByTrimmingCharactersInSet:
-                              [NSCharacterSet whitespaceAndNewlineCharacterSet]];
-            //             NSLog(@"trimmed %@.txt", trim);
-            [usableComponents addObject:trim];
+            NSString *trim = [aString stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
+            // NSLog(@"trimmed %@.txt", trim);
+            [usableStrings addObject:trim];
         }
     }
     
     /*
+     //need to explicitly use index to avoid enumerating while mutable array is being mutated
      int i;
-     for (i=0; i<[usableComponents count]; i++){  //need to explicitly use index to avoid enumerating while mutable array is being mutated
+     for (i=0; i<[usableComponents count]; i++){
      NSLog(@"saved element %@", [usableComponents objectAtIndex:i]);
      }
      */
-    
-    
-    
-    
-    return usableComponents;
+    return usableStrings;
 }
+
 
 void updatePlistWithFileNamePersonNumber(NSString * fileName, NSString * personName, NSString * phoneNumber, NSString * commandName){
 
@@ -118,9 +59,6 @@ void updatePlistWithFileNamePersonNumber(NSString * fileName, NSString * personN
         
         data = [[NSMutableDictionary alloc] initWithContentsOfFile: filePath];
         NSMutableArray * matches = [[NSMutableArray alloc] init];
-        NSMutableArray * reverseResults = [[NSMutableArray alloc] init];
-        NSMutableArray * reverseMatches = [[NSMutableArray alloc] init];
-
         
         for (NSString * key in [data allKeys]) {
             if ([key isEqualToString:personName] && [commandName isEqualToString:@"add"]) { //checks for intentional change
@@ -133,7 +71,7 @@ void updatePlistWithFileNamePersonNumber(NSString * fileName, NSString * personN
                 return;
             }
             
-            NSArray * splitNames = segmentEntryByStringCharSet(key, @" ");
+            NSArray * splitNames = segmentUserInputByStringCharSet(key, @" ");
             if ([splitNames containsObject:personName] && [commandName isEqualToString:@"lookup"]) { //checks for intentional change
                 [matches addObject:key];
 //                return;
@@ -179,40 +117,66 @@ NSString * returnInputWithLastCharRemoved(NSString * input){
 
 void handleInput(NSString * input){
     
-    NSArray * parsedBySpace = segmentEntryByStringCharSet(input, @" ");//right now segmenting for create
+    NSArray * parsedBySpace = segmentUserInputByStringCharSet(input, @" ");
     NSString * commandName = [parsedBySpace objectAtIndex:0];
     NSString * fileName = [parsedBySpace lastObject];
     NSString * personName = nil;
     NSString * phoneNumber = nil;
+    NSString * numArgErrorMessage = @"wrong number of arguments";
+    NSString * numSingQuoteErrorMessage = @"please put single quotes around name and phone number - e.g. 'John Smith', '123 456 789'";
+
     
-    if ([commandName isEqualToString:@"create"] && [parsedBySpace count] == 2) { //check for args count
-        updatePlistWithFileNamePersonNumber(fileName, nil, nil, commandName);
+    //create is special case can parse by space only
+    if ([commandName isEqualToString:@"create"]) { //check for args count
+        if ([parsedBySpace count] == 2) {
+            updatePlistWithFileNamePersonNumber(fileName, nil, nil, commandName);
+            NSLog(@"New phonebook named %@ created", fileName);
+        }
+        else{
+            NSLog(@"Error: %@", numArgErrorMessage);
+        }
         return;
     }
     
-    NSArray * parsedByQuote = segmentEntryByStringCharSet(input, @"'");
-    BOOL commandFound = NO;
-
+    //others require parse by quote
+    int numSingleQuotesFound = (int)[[input componentsSeparatedByString:@"'"] count] - 1;
+    NSArray * parsedByQuote = segmentUserInputByStringCharSet(input, @"'");
+    
     if (([commandName isEqualToString:@"add"] ||
-         [commandName isEqualToString:@"change"]) && [parsedByQuote count] == 4) {
+         [commandName isEqualToString:@"change"])) {
         
-        personName = [parsedByQuote objectAtIndex:1];
-        phoneNumber = [parsedByQuote objectAtIndex:2];
-        commandFound = YES;
+        if (numSingleQuotesFound == 4 && [parsedByQuote count] == 4) {
+            personName = [parsedByQuote objectAtIndex:1];
+            phoneNumber = [parsedByQuote objectAtIndex:2];
+            updatePlistWithFileNamePersonNumber(fileName, personName, phoneNumber, commandName);
+            NSLog(@"%@ : %@ in Phonebook called %@", personName, phoneNumber, fileName);
+            return;
+        }
+        else if(numSingleQuotesFound != 4){
+            NSLog(@"Error: %@", numSingQuoteErrorMessage);
+        }
+        else{
+            NSLog(@"Error: %@", numArgErrorMessage);
+        }
+        return;
     }
     
-    if (([commandName isEqualToString:@"remove"] || [commandName isEqualToString:@"lookup"] || [commandName isEqualToString:@"reverse-lookup"]) && [parsedByQuote count] == 3) {
-        phoneNumber = [parsedByQuote objectAtIndex:1];
-        commandFound = YES;
-
+    if (([commandName isEqualToString:@"remove"] || [commandName isEqualToString:@"lookup"] || [commandName isEqualToString:@"reverse-lookup"])) {
+        if (numSingleQuotesFound == 2 && [parsedByQuote count] == 3) {
+            phoneNumber = [parsedByQuote objectAtIndex:1];
+            updatePlistWithFileNamePersonNumber(fileName, nil, nil, commandName);
+        }
+        else if(numSingleQuotesFound != 2){
+            NSLog(@"Error: %@", numSingQuoteErrorMessage);
+        }
+        else{
+            NSLog(@"Error: %@", numArgErrorMessage);
+        }
+        return;
     }
     
-    if (commandFound) {
-        updatePlistWithFileNamePersonNumber(fileName, personName, phoneNumber, commandName);
-    }
-    else{
-        NSLog(@"command not found");
-    }
+    NSLog(@"Error: Command not found");
+    
 }
 
 int main(int argc, const char * argv[]) {
@@ -225,9 +189,8 @@ int main(int argc, const char * argv[]) {
             char str[100] = {0}; // static allocation of string
             fgets (str, sizeof(str), stdin); //input buffer, bufferlength, stin
 
-            NSString * entry = [NSString stringWithFormat:@"%s", str]; //convert c string to NSString
-            handleInput(entry);
-
+            NSString * userInput = [NSString stringWithFormat:@"%s", str]; //convert c string to NSString
+            handleInput(userInput);
         }
     }
     return 0;
